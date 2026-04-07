@@ -1,5 +1,5 @@
 # Specification for a blocking bounded queue
-# All operations except BQueue(n) must be atomic
+# All operations except BQueue(n) must be atomic (linearizable)
 
 def BQueue(n):
     result = {
@@ -11,23 +11,32 @@ def BQueue(n):
     }
 
 def bq_put(bq, v):
-    atomically:
-        await bq->count < bq->size
-        bq->data[bq->tail] = v
-        bq->tail = (bq->tail + 1) % bq->size
-        bq->count += 1
+    done = False
+    while not done:
+        atomically:
+            if bq->count < bq->size:
+                bq->data[bq->tail] = v
+                bq->tail = (bq->tail + 1) % bq->size
+                bq->count += 1
+                done = True
 
 def bq_get(bq):
-    atomically:
-        await bq->count > 0
-        result = bq->data[bq->head]
-        bq->head = (bq->head + 1) % bq->size
-        bq->count -= 1
+    done = False
+    while not done:
+        atomically:
+            if bq->count > 0:
+                result = bq->data[bq->head]
+                bq->head = (bq->head + 1) % bq->size
+                bq->count -= 1
+                done = True
 
 def bq_peek(bq):
-    atomically:
-        await bq->count > 0
-        result = bq->data[bq->head]
+    done = False
+    while not done:
+        atomically:
+            if bq->count > 0:
+                result = bq->data[bq->head]
+                done = True
 
 def bq_clear(bq):
     atomically:

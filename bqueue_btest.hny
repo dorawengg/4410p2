@@ -25,14 +25,14 @@ def peek_thread():
 def clear_thread():
     bqueue.bq_clear(?myq)
 
-for i in range(NPUT):
+for i in {1..NPUT}:
     spawn put_thread()
 
-for i in range(NGET):
+for i in {1..NGET}:
     spawn get_thread()
 
-for i in range(NPEEK):
+for i in {1..NPEEK}:
     spawn peek_thread()
 
-for i in range(NCLEAR):
+for i in {1..NCLEAR}:
     spawn clear_thread()
