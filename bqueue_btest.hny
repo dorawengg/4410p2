@@ -1,0 +1,38 @@
+# Black-box differential test for blocking bounded queue
+# Import spec only — do not dereference the queue pointer
+
+import bqueue
+
+const SIZE = 1
+const NPUT = 2
+const NGET = 2
+const NPEEK = 0
+const NCLEAR = 0
+
+myq = bqueue.BQueue(SIZE)
+
+def put_thread():
+    bqueue.bq_put(?myq, 1)
+
+def get_thread():
+    let v = bqueue.bq_get(?myq):
+        pass
+
+def peek_thread():
+    let v = bqueue.bq_peek(?myq):
+        pass
+
+def clear_thread():
+    bqueue.bq_clear(?myq)
+
+for i in range(NPUT):
+    spawn put_thread()
+
+for i in range(NGET):
+    spawn get_thread()
+
+for i in range(NPEEK):
+    spawn peek_thread()
+
+for i in range(NCLEAR):
+    spawn clear_thread()

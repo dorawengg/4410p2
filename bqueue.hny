@@ -1,0 +1,37 @@
+# Specification for a blocking bounded queue
+# All operations except BQueue(n) must be atomic
+
+def BQueue(n):
+    result = {
+        .data: [None,] * n,
+        .size: n,
+        .count: 0,
+        .head: 0,
+        .tail: 0
+    }
+
+def bq_put(bq, v):
+    atomically:
+        await bq->count < bq->size
+        bq->data[bq->tail] = v
+        bq->tail = (bq->tail + 1) % bq->size
+        bq->count += 1
+
+def bq_get(bq):
+    atomically:
+        await bq->count > 0
+        result = bq->data[bq->head]
+        bq->head = (bq->head + 1) % bq->size
+        bq->count -= 1
+
+def bq_peek(bq):
+    atomically:
+        await bq->count > 0
+        result = bq->data[bq->head]
+
+def bq_clear(bq):
+    atomically:
+        bq->data = [None,] * bq->size
+        bq->count = 0
+        bq->head = 0
+        bq->tail = 0
