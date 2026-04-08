@@ -1,46 +1,19 @@
-# Specification for a blocking bounded queue
-# All operations except BQueue(n) must be atomic (linearizable)
-
-def BQueue(n):
-    result = {
-        .data: [None,] * n,
-        .size: n,
-        .count: 0,
-        .head: 0,
-        .tail: 0
-    }
+def BQueue(n) returns bq:
+    bq = { .elements: [], .size: n }
 
 def bq_put(bq, v):
-    done = False
-    while not done:
-        atomically:
-            if bq->count < bq->size:
-                bq->data[bq->tail] = v
-                bq->tail = (bq->tail + 1) % bq->size
-                bq->count += 1
-                done = True
+    atomically when len(bq->elements) < bq->size:
+        bq->elements += [v,]
 
-def bq_get(bq):
-    done = False
-    while not done:
-        atomically:
-            if bq->count > 0:
-                result = bq->data[bq->head]
-                bq->head = (bq->head + 1) % bq->size
-                bq->count -= 1
-                done = True
+def bq_get(bq) returns next:
+    atomically when bq->elements != []:
+        next = bq->elements[0]
+        del bq->elements[0]
 
-def bq_peek(bq):
-    done = False
-    while not done:
-        atomically:
-            if bq->count > 0:
-                result = bq->data[bq->head]
-                done = True
+def bq_peek(bq) returns next:
+    atomically when bq->elements != []:
+        next = bq->elements[0]
 
 def bq_clear(bq):
     atomically:
-        bq->data = [None,] * bq->size
-        bq->count = 0
-        bq->head = 0
-        bq->tail = 0
+        bq->elements = []

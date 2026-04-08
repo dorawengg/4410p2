@@ -1,53 +1,40 @@
-# Implementation of a blocking bounded queue
-# Uses Lock and Condition variables from synch module
-# No atomically/sequential keywords allowed
+from synch import Lock, acquire, release, Condition, wait, notify_all
 
-import synch
-
-def BQueue(n):
-    result = {
-        .data: [None,] * n,
-        .size: n,
-        .count: 0,
-        .head: 0,
-        .tail: 0,
-        .lock: synch.Lock(),
-        .not_full: synch.Condition(),
-        .not_empty: synch.Condition()
+def BQueue(n) returns bq:
+    bq = { 
+        .elements: [], 
+        .size: n, 
+        .lock: Lock(), 
+        .not_empty: Condition(), 
+        .not_full: Condition() 
     }
 
 def bq_put(bq, v):
-    synch.acquire(?bq->lock)
-    while bq->count == bq->size:
-        synch.wait(?bq->not_full, ?bq->lock)
-    bq->data[bq->tail] = v
-    bq->tail = (bq->tail + 1) % bq->size
-    bq->count += 1
-    synch.notify(?bq->not_empty)
-    synch.release(?bq->lock)
+    acquire(?bq->lock)
+    while len(bq->elements) == bq->size:
+        wait(?bq->not_full, ?bq->lock)
+    bq->elements += [v,]
+    notify_all(?bq->not_empty)
+    release(?bq->lock)
 
-def bq_get(bq):
-    synch.acquire(?bq->lock)
-    while bq->count == 0:
-        synch.wait(?bq->not_empty, ?bq->lock)
-    result = bq->data[bq->head]
-    bq->head = (bq->head + 1) % bq->size
-    bq->count -= 1
-    synch.notify(?bq->not_full)
-    synch.release(?bq->lock)
+def bq_get(bq) returns next:
+    acquire(?bq->lock)
+    while bq->elements == []:
+        wait(?bq->not_empty, ?bq->lock)
+    next = bq->elements[0]
+    del bq->elements[0]
+    notify_all(?bq->not_full)
+    release(?bq->lock)
 
-def bq_peek(bq):
-    synch.acquire(?bq->lock)
-    while bq->count == 0:
-        synch.wait(?bq->not_empty, ?bq->lock)
-    result = bq->data[bq->head]
-    synch.release(?bq->lock)
+def bq_peek(bq) returns next:
+    acquire(?bq->lock)
+    while bq->elements == []:
+        wait(?bq->not_empty, ?bq->lock)
+    next = bq->elements[0]
+    release(?bq->lock)
 
 def bq_clear(bq):
-    synch.acquire(?bq->lock)
-    bq->data = [None,] * bq->size
-    bq->count = 0
-    bq->head = 0
-    bq->tail = 0
-    synch.notifyAll(?bq->not_full)
-    synch.release(?bq->lock)
+    acquire(?bq->lock)
+    bq->elements = []
+    notify_all(?bq->not_full)
+    release(?bq->lock)
