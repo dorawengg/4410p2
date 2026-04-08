@@ -42,6 +42,9 @@ def bq_peek(bq) returns next:
         wait(?bq->not_empty, ?bq->lock)
         
     next = bq->data[bq->head]
+    
+    notify(?bq->not_empty) 
+    
     release(?bq->lock)
 
 def bq_clear(bq):
