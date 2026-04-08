@@ -2,8 +2,11 @@ from synch import Lock, acquire, release, Condition, wait, notify_all
 
 def BQueue(n) returns bq:
     bq = { 
-        .elements: [], 
-        .size: n, 
+        .data: [None,] * n, 
+        .size: n,
+        .head: 0,
+        .tail: 0,
+        .count: 0,
         .lock: Lock(), 
         .not_empty: Condition(), 
         .not_full: Condition() 
@@ -11,30 +14,42 @@ def BQueue(n) returns bq:
 
 def bq_put(bq, v):
     acquire(?bq->lock)
-    while len(bq->elements) == bq->size:
+    while bq->count == bq->size:
         wait(?bq->not_full, ?bq->lock)
-    bq->elements += [v,]
+    
+    bq->data[bq->tail] = v
+    bq->tail = (bq->tail + 1) % bq->size
+    bq->count += 1
+    
     notify_all(?bq->not_empty)
     release(?bq->lock)
 
 def bq_get(bq) returns next:
     acquire(?bq->lock)
-    while bq->elements == []:
+    while bq->count == 0:
         wait(?bq->not_empty, ?bq->lock)
-    next = bq->elements[0]
-    del bq->elements[0]
+        
+    next = bq->data[bq->head]
+    bq->head = (bq->head + 1) % bq->size
+    bq->count -= 1
+    
     notify_all(?bq->not_full)
     release(?bq->lock)
 
 def bq_peek(bq) returns next:
     acquire(?bq->lock)
-    while bq->elements == []:
+    while bq->count == 0:
         wait(?bq->not_empty, ?bq->lock)
-    next = bq->elements[0]
+        
+    next = bq->data[bq->head]
     release(?bq->lock)
 
 def bq_clear(bq):
     acquire(?bq->lock)
-    bq->elements = []
+    bq->data = [None,] * bq->size
+    bq->head = 0
+    bq->tail = 0
+    bq->count = 0
+    
     notify_all(?bq->not_full)
     release(?bq->lock)
