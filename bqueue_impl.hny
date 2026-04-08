@@ -1,4 +1,4 @@
-from synch import Lock, acquire, release, Condition, wait, notify_all
+from synch import Lock, acquire, release, Condition, wait, notify, notify_all
 
 def BQueue(n) returns bq:
     bq = { 
@@ -21,7 +21,7 @@ def bq_put(bq, v):
     bq->tail = (bq->tail + 1) % bq->size
     bq->count += 1
     
-    notify_all(?bq->not_empty)
+    notify(?bq->not_empty)
     release(?bq->lock)
 
 def bq_get(bq) returns next:
@@ -33,7 +33,7 @@ def bq_get(bq) returns next:
     bq->head = (bq->head + 1) % bq->size
     bq->count -= 1
     
-    notify_all(?bq->not_full)
+    notify(?bq->not_full)
     release(?bq->lock)
 
 def bq_peek(bq) returns next:
